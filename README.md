@@ -9,7 +9,7 @@ There's not much to say, really. This is a simple clock application. It draws an
 
 Currently it's a Visual Studio based, Windows-only project, so VS 2022 using the latest cpp compiler should be the way to go.
 
-Also, rendering is handled by the [olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine). Just paste the single header file (https://raw.githubusercontent.com/OneLoneCoder/olcPixelGameEngine/master/olcPixelGameEngine.h) into the source folder, and you'll be good to go.
+Also, rendering is handled by the [olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine). Just paste the [single header file](https://raw.githubusercontent.com/OneLoneCoder/olcPixelGameEngine/master/olcPixelGameEngine.h) into the source folder, and you'll be good to go.
 
 ## What is it even for?
 
