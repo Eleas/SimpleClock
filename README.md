@@ -1,9 +1,17 @@
 # SimpleClock
-## A dead simple wall-clock, written in C++
+## What it is
 
-There's not much to say, really. This is a dead simple clock application. It draws an image of a clock, and shows the time.
+It's just a dead simple wall-clock, written in C++.
 
-## Why would you do this?
+There's not much to say, really. This is a simple clock application. It draws an image of a clock on the screem, which shows the time.
+
+##  How do I run it?
+
+Currently it's a Visual Studio based, Windows-only project, so VS 2022 using the latest cpp compiler should be the way to go.
+
+Also, rendering is handled by the [olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine). Just paste the single header file (https://raw.githubusercontent.com/OneLoneCoder/olcPixelGameEngine/master/olcPixelGameEngine.h) into the source folder, and you'll be good to go.
+
+## What is it even for?
 
 Well, it's a code kata. In order to be better and faster at writing code, I need to do these things. I've not written something based on Windows time yet, so there were a few gotchas. But at this point, I think, the code can be considered acceptable.
 
@@ -13,4 +21,4 @@ I could (should) convert it to CMake, and ensure that it is platform independent
 
 ## Can I use it?
 
-Sure. It uses the Unlicense. Knock yourself out.
+Sure. It's under the [Unlicense](https://unlicense.org/). Knock yourself out.
