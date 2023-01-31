@@ -3,7 +3,7 @@
 
 It's just a dead simple wall-clock, written in C++.
 
-There's not much to say, really. This is a simple clock application. It draws an image of a clock on the screem, which shows the time.
+There's not much to say, really. This is a simple clock application. It draws an image of a clock on the screen, which shows the time.
 
 ##  How do I run it?
 
