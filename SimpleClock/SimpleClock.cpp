@@ -5,36 +5,25 @@
 #include "atltime.h"
 #include <cmath>
 
-
 template <typename T_ty>
 constexpr T_ty degToRad(T_ty angle)
 {
 	return angle * (M_PI / T_ty(180));
 }
 
-
-struct hhmmss {
-	int hour;
-	int minute;
-	int second;
-};
-
-
-inline bool operator==(const hhmmss& lhs, const hhmmss& rhs) {
-	return lhs.hour == rhs.hour &&
-		lhs.minute == rhs.minute &&
-		lhs.second == rhs.second;
-}
-
+using olc::Pixel;
+using olc::vi2d;
 
 using std::min;
+using std::string;
 using std::to_string;
 
 class SimpleClock : public olc::PixelGameEngine
 {
 private:
-	hhmmss lastTick = { -1, 0, 0 };
-	const olc::vi2d center = { ScreenWidth() / 2, ScreenHeight() / 2 };
+	CTime lastTick;
+
+	const vi2d center = { ScreenWidth() / 2, ScreenHeight() / 2 };
 
 	const double outerRadius = min(center.x, center.y) - 1.0;
 	const double midfieldRadius = outerRadius * 0.96;
@@ -42,15 +31,32 @@ private:
 	const double hourHandLength = outerRadius * 0.6;
 
 private:
-	olc::vi2d GetClockCoords(const double angleInDegrees,
-		const double multiplier) const
+	vi2d TransposeAroundClockAxis(const double angleInDegrees,
+		const double radius) const
 	{
 		const auto angleInRadians = degToRad(angleInDegrees);
 
 		return {
-		static_cast<int32_t>(sin(angleInRadians) * multiplier) + center.x,
-		static_cast<int32_t>(-cos(angleInRadians) * multiplier) + center.y
+		static_cast<int32_t>(sin(angleInRadians) * radius) + center.x,
+		static_cast<int32_t>(-cos(angleInRadians) * radius) + center.y
 		};
+	}
+
+private: 
+	void DrawNumeral(const int numericValue) 
+	{
+		const string numeral = to_string(numericValue);
+		const auto numeralSize = GetTextSizeProp(numeral);
+
+		const auto inner =
+			TransposeAroundClockAxis(numericValue * (360 / 12),
+				midfieldRadius * 0.8);
+
+		const auto adjustedInner = 
+			vi2d(inner.x - (numeralSize.x / 2), 
+			inner.y - (numeralSize.y / 2));
+
+		DrawString(adjustedInner, numeral);
 	}
 
 private:
@@ -62,22 +68,16 @@ private:
 			const double minuteMarkInnerRadius =
 				isFiveMinuteMark ? innerRadius : midfieldRadius;
 
-			const auto outer = 
-				GetClockCoords(i, outerRadius - 1.0);
-
-			const auto inner = 
-				GetClockCoords(i, minuteMarkInnerRadius);
+			const auto outer = TransposeAroundClockAxis(i, outerRadius - 1.0);
+			const auto inner = TransposeAroundClockAxis(i, minuteMarkInnerRadius);
 
 			DrawLine(outer, 
 				inner, 
 				isFiveMinuteMark ? olc::DARK_GREY : olc::VERY_DARK_GREY);
 		}
 
-		for (int i = 0; i < 12; ++i) {
-			const auto inner =
-				GetClockCoords((i + 1) * (360/12), midfieldRadius * 0.8);
-
-			DrawString(inner, to_string(i+1));
+		for (int i = 1; i <= 12; ++i) {
+			DrawNumeral(i);
 		}
 
 		DrawCircle(center, 
@@ -92,21 +92,22 @@ private:
 		DrawHourHand();
 		DrawMinuteHand();
 		DrawSecondsHand();
+		Sleep(10);
 	}
 
 
 private:
 	inline void DrawHourHand() {
-		const auto hoursAnalog = lastTick.hour % 12;
+		const auto hoursAnalog = lastTick.GetHour() % 12;
 
 		// Hour hand position depends on hours and minutes (also seconds, but
 		// we ignore that for now).
 		const double hourAngle = 
 			(static_cast<double>(hoursAnalog) * (360.0 / 12.0))
-			+ (((360.0 / 12.0) * static_cast<double>(lastTick.minute)) / 60.0);
+			+ (((360.0 / 12.0) * static_cast<double>(lastTick.GetMinute())) / 60.0);
 
 		const auto hourPosition = 
-			GetClockCoords(hourAngle, hourHandLength);
+			TransposeAroundClockAxis(hourAngle, hourHandLength);
 
 		// Draw with appropriate thickness.
 		DrawLine({ center.x + 1, center.y + 1 },
@@ -124,24 +125,22 @@ private:
 private:
 	inline void DrawMinuteHand() {
 		const double minuteAngle = 
-			static_cast<double>(lastTick.minute) * 6.0;
+			static_cast<double>(lastTick.GetMinute()) * 6.0;
 
 		const auto minutePosition = 
-			GetClockCoords(minuteAngle, innerRadius - 1);
+			TransposeAroundClockAxis(minuteAngle, innerRadius - 1);
 
 		DrawLine(center,
 			minutePosition,
 			olc::GREY);
 	}
-
-
 private:
 	inline void DrawSecondsHand() {
 		const double secondsAngle = 
-			static_cast<double>(lastTick.second) * 6.0;
+			static_cast<double>(lastTick.GetSecond()) * 6.0;
 
 		const auto secondsPosition = 
-			GetClockCoords(secondsAngle, innerRadius - 1);
+			TransposeAroundClockAxis(secondsAngle, innerRadius - 1);
 
 		DrawLine(center,
 			secondsPosition, 
@@ -153,18 +152,14 @@ private:
 	bool NextTick() {
 		time_t osBinaryTime;  // C run-time time (defined in <time.h>)
 		time(&osBinaryTime);  // Get the current time from the OS.
-		CTime t(osBinaryTime);
+		CTime current(osBinaryTime);
 
-		hhmmss currentTick = { t.GetHour(),
-		t.GetMinute(),
-		t.GetSecond() };
-
-		if (currentTick != lastTick) {
-			lastTick = currentTick;
-			return true;
+		if (lastTick == current) {
+			return false;
 		}
-
-		return false;
+		
+		lastTick = current;
+		return true;
 	}
 
 
@@ -178,6 +173,8 @@ public:
 public:
 	bool OnUserCreate() override
 	{
+		lastTick = CTime(0);
+
 		DrawClockFace();
 		return true;
 	}
@@ -186,12 +183,13 @@ public:
 public:
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		if (NextTick()) {
-			Clear(olc::BLACK);
-			DrawClockFace();
-			DrawHands();
+		if (!NextTick()) {
+			return true;
 		}
 
+		Clear(olc::BLACK);
+		DrawClockFace();
+		DrawHands();
 		return true;
 	}
 };
@@ -201,7 +199,7 @@ int main()
 {
 	SimpleClock clock;
 
-	if (clock.Construct(256, 240, 4, 4)) {
+	if (clock.Construct(256, 240, 2, 2)) {
 		clock.Start();
 	}
 
