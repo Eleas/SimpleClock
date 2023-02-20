@@ -50,32 +50,32 @@ private:
 
 
 private:
-        string Romanize(int n) 
+	string Romanize(int n) const 
 	{
-		string str_romans[] = { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
-                int values[] = { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
+		const string str_romans[] = { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
+		const int values[] = { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
+
+		string result = string();
  
-                string result = string();
- 
-                for (auto i = 0; i < 13; ++i)
-                {
-                	while (n - values[i] >= 0)
-                        {
+		for (auto i = 0; i < 13; ++i)
+        {
+			while (n - values[i] >= 0)
+			{
 				result += str_romans[i];
-                                n -= values[i];
-                        }
-                }
-        	return result;
-        }
+				n -= values[i];
+			}
+		}
+		return result;
+	}
 
 
 private: 
 	void DrawNumeral(const int numericValue) 
 	{
 		
-                const string numeral = (hourSymbols == Symbol::Numerals) ?
+		const string numeral = (hourSymbols == Symbol::Numerals) ?
 			to_string(numericValue) :
-                        Romanize(numericValue);
+			Romanize(numericValue);
 
 		const auto numeralSize = GetTextSizeProp(numeral);
 
