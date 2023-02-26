@@ -19,15 +19,14 @@ using std::string;
 using std::to_string;
 
 enum class Symbol {
-    Numerals, Roman
+	Numerals, Roman
 };
- 
 
 class SimpleClock : public olc::PixelGameEngine
 {
 private:
 	CTime lastTick;
-        Symbol hourSymbols = Symbol::Roman;
+	Symbol hourSymbols = Symbol::Roman;
 
 	const vi2d center = { ScreenWidth() / 2, ScreenHeight() / 2 };
 
@@ -48,17 +47,15 @@ private:
 		};
 	}
 
-
 private:
-	string Romanize(int n) const 
-	{
-		const string str_romans[] = { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
-		const int values[] = { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
+	string Romanize(int n) {
+		string str_romans[] = { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
+		int values[] = { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
 
 		string result = string();
- 
+
 		for (auto i = 0; i < 13; ++i)
-        {
+		{
 			while (n - values[i] >= 0)
 			{
 				result += str_romans[i];
@@ -68,13 +65,11 @@ private:
 		return result;
 	}
 
-
 private: 
 	void DrawNumeral(const int numericValue) 
 	{
-		
-		const string numeral = (hourSymbols == Symbol::Numerals) ?
-			to_string(numericValue) :
+		const string numeral = (hourSymbols == Symbol::Numerals) ? 
+			to_string(numericValue) : 
 			Romanize(numericValue);
 
 		const auto numeralSize = GetTextSizeProp(numeral);
@@ -126,29 +121,41 @@ private:
 		Sleep(10);
 	}
 
+private: 
+	inline double GetHourhandAngleDegrees() const {
+		const auto hoursAnalog = lastTick.GetHour() % 12;
+		// Hour hand position depends on hours and minutes (also seconds, but
+		// we ignore that for now).
+		return
+			(static_cast<double>(hoursAnalog) * (360.0 / 12.0))
+			+ (((360.0 / 12.0) * static_cast<double>(lastTick.GetMinute())) / 60.0);	
+	}
+
+	inline bool IsVertical(const double angle) const {
+		return (static_cast<int>(angle + 45) / 90) % 2;
+	}
 
 private:
 	inline void DrawHourHand() {
-		const auto hoursAnalog = lastTick.GetHour() % 12;
-
-		// Hour hand position depends on hours and minutes (also seconds, but
-		// we ignore that for now).
-		const double hourAngle = 
-			(static_cast<double>(hoursAnalog) * (360.0 / 12.0))
-			+ (((360.0 / 12.0) * static_cast<double>(lastTick.GetMinute())) / 60.0);
+		const auto hourHandAngle = GetHourhandAngleDegrees();
 
 		const auto hourPosition = 
-			TransposeAroundClockAxis(hourAngle, hourHandLength);
+			TransposeAroundClockAxis(hourHandAngle, hourHandLength);
 
 		// Draw with appropriate thickness.
-		DrawLine({ center.x + 1, center.y + 1 },
-			{ hourPosition.x + 1, hourPosition.y + 1 },
+		// Is it mostly vertical or mostly horizontal?
+		const bool mostlyVertical = IsVertical(hourHandAngle);
+		const int xIncrement = (mostlyVertical) ? 0 : 1;
+		const int yIncrement = (mostlyVertical) ? 1 : 0;
+
+		DrawLine({ center.x + xIncrement, center.y + yIncrement },
+			{ hourPosition.x + xIncrement, hourPosition.y + yIncrement },
 			olc::DARK_RED);
 		DrawLine(center,
 			hourPosition,
 			olc::RED);
-		DrawLine({ center.x - 1, center.y - 1 },
-			{ hourPosition.x - 1, hourPosition.y - 1 },
+		DrawLine({ center.x - xIncrement, center.y - yIncrement },
+			{ hourPosition.x - xIncrement, hourPosition.y - yIncrement },
 			olc::RED);
 	}
 
@@ -214,13 +221,20 @@ public:
 public:
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		if (!NextTick()) {
-			return true;
-		}
+		const bool tabKeyReleased = GetKey(olc::Key::TAB).bReleased;
 
-		Clear(olc::BLACK);
-		DrawClockFace();
-		DrawHands();
+		if (tabKeyReleased || NextTick()) {
+			if (tabKeyReleased) {
+				hourSymbols = (hourSymbols == Symbol::Numerals) ?
+					Symbol::Roman :
+					Symbol::Numerals;
+			}
+
+			Clear(olc::BLACK);
+			DrawClockFace();
+			DrawHands();
+		} 
+
 		return true;
 	}
 };
